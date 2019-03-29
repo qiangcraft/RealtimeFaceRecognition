@@ -17,17 +17,6 @@ import static pp.facerecognizer.env.FileUtils.EMBEDDING_SIZE;
  */
 public class FaceFeature {
     public static final int DIMS=512;
-//    private float fea[];
-//    public FaceFeature(){
-//        fea=new float[DIMS];
-//    }
-//    public float[] getFeature(){
-//        return fea;
-//    }
-//
-//    public void setFea(float[] fea) {
-//        this.fea = fea;
-//    }
 
     //比较当前特征和另一个特征之间的相似度
     public static double compare(float fea1[], float fea2[]){
@@ -44,9 +33,12 @@ public class FaceFeature {
         Pair<Integer, Double>  pair;
         faceDbList = FileUtils.readFileByLine(FaceDBpath);
         int label = -1; // return unknown
-        double result = 1000;
-        pair = new Pair<>(label, result);
-        int p=1;
+        double result = 1000;//初始化计算结果
+        int p=1;//用于查看计算结果计数
+
+        int labelResult = label;//寻找最小结果对应的label
+        double minCmpResult = result; //用于寻找最小计算结果
+
         for(String faceStr: faceDbList){
 //            Log.d(TAG, "search faceStr: "+faceStr);
             int i = 0;
@@ -80,18 +72,18 @@ public class FaceFeature {
                 faceArray[index] = embeddingNum;
             }
 //            Log.d(TAG, "search faceArray: "+faceArray.length);
-//            for(int n = 0; n < faceArray.length/16; n++) {
-//               Log.d(TAG, "faceArray["+n+"]:"+faceArray[n]);
-//
-//            }
+
             result = compare(faceArray, embbedingsArray);
             Log.d(TAG, "search Result"+p+":"+result);
             p++;
             if(result < 1.1){
-                pair = new Pair<>(label, result);
-                return pair;
+                if(result < minCmpResult) {
+                    minCmpResult = result;
+                    labelResult = label;
+                }
             }
         }
+        pair = new Pair<>(labelResult, minCmpResult);
         return pair;
     }
 }

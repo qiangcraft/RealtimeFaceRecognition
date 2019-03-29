@@ -10,7 +10,7 @@ The project is heavily inspired by
 * [MTCNN](https://github.com/blaueck/tf-mtcnn)
 * [Tensorflow Android Camera Demo](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/android)
 * [Face-recognizer-android](https://github.com/pillarpond/face-recognizer-android)
-## Function 
+## Function
 The code can recognize 5 famous people's faces.[(Source)](https://github.com/qiangz520/RealtimeFaceRecognition/blob/master/app/src/main/assets/label)
 
 

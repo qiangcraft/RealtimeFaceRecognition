@@ -175,13 +175,7 @@ public class Classifier {
                 android.util.Pair<Integer, Double> pair = FaceFeature.search(embeddingsArray, DATA_FILE);
 
                 matrix.mapRect(rectF);
-//                Float prob = pair.second;
-//
-//                String name;
-//                if (prob > 0.5)
-//                    name = classNames.get(pair.first);
-//                else
-//                    name = "Unknown";
+
                 String name;
                 int label = pair.first;
                 double result = pair.second;
@@ -225,20 +219,6 @@ public class Classifier {
                 list.add(emb_array);
             }
 
-//            svm.train(label, list);
-//            StringBuilder builder = new StringBuilder();
-//
-//            for (int i = 0; i < list.size(); i++) {
-//                float[] array = list.get(i);
-//                builder.append(label).append(" ").append("[");
-//                for (int j = 0; j < array.length; j++) {
-//                    builder.append(array[j]).append(",");
-//                }
-//                builder.deleteCharAt(builder.length()-1);
-//                builder.append("]");
-//                if (i < list.size() - 1) builder.append(System.lineSeparator());
-//            }
-//            FileUtils.appendText(builder.toString(), FileUtils.DATA_FILE);
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < list.size(); i++) {
                 float[] array = list.get(i);
