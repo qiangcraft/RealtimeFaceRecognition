@@ -32,8 +32,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import androidx.core.util.Pair;
 import pp.facerecognizer.env.FileUtils;
+import pp.facerecognizer.faceCompare.DetectedFace;
 import pp.facerecognizer.wrapper.FaceNet;
 import pp.facerecognizer.wrapper.MTCNN;
 import pp.facerecognizer.faceCompare.FaceFeature;
@@ -123,13 +123,11 @@ public class Classifier {
 
     private MTCNN mtcnn;
     private FaceNet faceNet;
-//    private LibSVM svm;
 
     private List<String> classNames;
 
 
     private Classifier() {}
-//    private String DATA_PATH = FileUtils.ROOT + File.separator + DATA_FILE;
     static Classifier getInstance (AssetManager assetManager,
                                    int inputHeight,
                                    int inputWidth) throws Exception {
@@ -159,23 +157,23 @@ public class Classifier {
 
     List<Recognition> recognizeImage(Bitmap bitmap, Matrix matrix) throws FileNotFoundException {
         synchronized (this) {
-            Pair faces[] = mtcnn.detect(bitmap);
+            List<DetectedFace> detectedFaceList = mtcnn.detect(bitmap);
 
             final List<Recognition> mappedRecognitions = new LinkedList<>();
 
-            for (Pair face : faces) {
-                RectF rectF = (RectF) face.first;
+            for (DetectedFace detectedFace : detectedFaceList) {
+                RectF rectF = detectedFace.getRectF();
+                float[] landmarks = detectedFace.getLandmarks();
                 float[] embeddingsArray = new float[Classifier.EMBEDDING_SIZE];
                 Rect rect = new Rect();
+                assert rectF != null;
                 rectF.round(rect);
 
-                FloatBuffer buffer = faceNet.getEmbeddings(bitmap, rect);
+                FloatBuffer buffer = faceNet.getEmbeddings(bitmap, rect, landmarks);
                 buffer.get(embeddingsArray,0 ,embeddingsArray.length);
-//                Pair<Integer, Float> pair = svm.predict(buffer);
                 android.util.Pair<Integer, Double> pair = FaceFeature.search(embeddingsArray, DATA_FILE);
-
+                // first - label; second - cmpResult
                 matrix.mapRect(rectF);
-
                 String name;
                 int label = pair.first;
                 double result = pair.second;
@@ -199,23 +197,24 @@ public class Classifier {
 
             for (Uri uri : uris) {
                 Bitmap bitmap = getBitmapFromUri(contentResolver, uri);
-                Pair faces[] = mtcnn.detect(bitmap);
+                List<DetectedFace> detectedFaceList = mtcnn.detect(bitmap);
 
                 float max = 0f;
                 Rect rect = new Rect();
+                DetectedFace maxFace = null;
 
-                for (Pair face : faces) {
-                    Float prob = (Float) face.second;
+                for (DetectedFace face : detectedFaceList) {
+                    Float prob =  face.getProbability();
                     if (prob > max) {
                         max = prob;
-
-                        RectF rectF = (RectF) face.first;
+                        maxFace = face;
+                        RectF rectF =  face.getRectF();
                         rectF.round(rect);
                     }
                 }
 
                 float[] emb_array = new float[EMBEDDING_SIZE];
-                faceNet.getEmbeddings(bitmap, rect).get(emb_array);
+                faceNet.getEmbeddings(bitmap, rect, maxFace.getLandmarks()).get(emb_array);
                 list.add(emb_array);
             }
 

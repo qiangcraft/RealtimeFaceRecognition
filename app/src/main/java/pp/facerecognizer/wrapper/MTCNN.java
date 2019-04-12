@@ -23,13 +23,15 @@ import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.List;
 
-import androidx.core.util.Pair;
+import pp.facerecognizer.faceCompare.DetectedFace;
 
 public class MTCNN {
     private static final String MODEL_FILE = "file:///android_asset/mtcnn.pb";
     // Only return this many results.
     private static final int MAX_RESULTS = 100;
+    private static final int NUM_LANDMARKS = 10;
     private static final int BYTE_SIZE_OF_FLOAT = 4;
 
     // Config values.
@@ -37,7 +39,9 @@ public class MTCNN {
 
     // Pre-allocated buffers.
     private FloatBuffer outputProbs;
+    private FloatBuffer outputLandmarks;
     private FloatBuffer outputBoxes;
+
     private String[] outputNames;
 
     private TensorFlowInferenceInterface inferenceInterface;
@@ -73,7 +77,9 @@ public class MTCNN {
         ByteBuffer byteBuffer = ByteBuffer.allocateDirect(MAX_RESULTS * BYTE_SIZE_OF_FLOAT);
         byteBuffer.order(ByteOrder.nativeOrder());
         d.outputProbs = byteBuffer.asFloatBuffer();
-
+        d.outputLandmarks = ByteBuffer.allocateDirect(MAX_RESULTS*BYTE_SIZE_OF_FLOAT*10)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer();
         d.outputBoxes = ByteBuffer.allocateDirect(MAX_RESULTS * BYTE_SIZE_OF_FLOAT * 4)
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer();
@@ -83,7 +89,7 @@ public class MTCNN {
 
     private MTCNN() {}
 
-    public Pair[] detect(Bitmap bitmap) {
+    public List<DetectedFace> detect(Bitmap bitmap) {
         // Log this method so that it can be analyzed with systrace.
         Trace.beginSection("detect");
 
@@ -119,33 +125,46 @@ public class MTCNN {
         // Copy the output Tensor back into the output array.
         Trace.beginSection("fetch");
         inferenceInterface.fetch(outputNames[0], outputProbs);
+        inferenceInterface.fetch(outputNames[1],outputLandmarks);
         inferenceInterface.fetch(outputNames[2], outputBoxes);
         Trace.endSection();
 
         outputProbs.flip();
+        outputLandmarks.flip();
         outputBoxes.flip();
 
+
         int len = outputProbs.remaining();
-        Pair faces[] = new Pair[len];
+        List<DetectedFace> facesList = null;
+        DetectedFace detectedFaceTmp;
 
         for (int i = 0; i < len; i++) {
+            float prob = outputProbs.get();
             float top = outputBoxes.get();
             float left = outputBoxes.get();
             float bottom = outputBoxes.get();
             float right = outputBoxes.get();
-
-            faces[i] = new Pair<>(
-                    new RectF(left, top, right, bottom), outputProbs.get());
+            int j;
+            float[] landmarks = new float[NUM_LANDMARKS] ;
+            for(j = 0; j < 10; j++){
+                 if (j%2==0) landmarks[j] = outputLandmarks.get()-left;//L1x,L1y,...,L5x,L5y;
+                     // 直接保存用Rect剪裁后的图片中face的landmarks
+                 else landmarks[j] = outputLandmarks.get()-top;
+            }
+            detectedFaceTmp = new DetectedFace(prob, landmarks,
+                    new RectF(left, top, right, bottom));
+            facesList.add(detectedFaceTmp);
         }
 
         if (outputBoxes.hasRemaining())
             outputBoxes.position(outputBoxes.limit());
 
         outputProbs.compact();
+        outputLandmarks.compact();
         outputBoxes.compact();
 
         Trace.endSection(); // "detect"
-        return faces;
+        return facesList;
     }
 
     public String getStatString() {

@@ -17,6 +17,7 @@ import static pp.facerecognizer.env.FileUtils.EMBEDDING_SIZE;
  */
 public class FaceFeature {
     public static final int DIMS=512;
+    public static final double THRESHOLD = 1.00; //若小于compare结果小于此阈值则认为是同一个人
 
     //比较当前特征和另一个特征之间的相似度
     public static double compare(float fea1[], float fea2[]){
@@ -76,7 +77,7 @@ public class FaceFeature {
             result = compare(faceArray, embbedingsArray);
             Log.d(TAG, "search Result"+p+":"+result);
             p++;
-            if(result < 1.1){
+            if(result < THRESHOLD){
                 if(result < minCmpResult) {
                     minCmpResult = result;
                     labelResult = label;

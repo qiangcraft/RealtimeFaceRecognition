@@ -92,6 +92,7 @@ public class MainActivity extends CameraActivity implements OnImageAvailableList
 
     private Snackbar initSnackbar;
     private Snackbar trainSnackbar;
+    private Snackbar warningSnackabr;
     private FloatingActionButton button;
 
     private boolean initialized = false;
@@ -104,6 +105,7 @@ public class MainActivity extends CameraActivity implements OnImageAvailableList
         FrameLayout container = findViewById(R.id.container);
         initSnackbar = Snackbar.make(container, "Initializing...", Snackbar.LENGTH_INDEFINITE);
         trainSnackbar = Snackbar.make(container, "Training data...", Snackbar.LENGTH_INDEFINITE);
+        warningSnackabr = Snackbar.make(container,"The name can't be empty!", Snackbar.LENGTH_SHORT);
 
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_edittext, null);
         EditText editText = dialogView.findViewById(R.id.edit_text);
@@ -111,12 +113,13 @@ public class MainActivity extends CameraActivity implements OnImageAvailableList
                 .setTitle(R.string.enter_name)
                 .setView(dialogView)
                 .setPositiveButton(getString(R.string.ok), (dialogInterface, i) -> {
-                    if(!editText.getText().equals("")) {
+                    if(!editText.getText().toString().trim().equals("")) {
                         int idx = classifier.addPerson(editText.getText().toString());
                         performFileSearch(idx - 1);
                     }
                     else{
-                        Toast.makeText(MainActivity.this,"姓名不能为空",Toast.LENGTH_SHORT);
+                        warningSnackabr.show();
+                        warningSnackabr.dismiss();
                     }
                 })
                 .create();

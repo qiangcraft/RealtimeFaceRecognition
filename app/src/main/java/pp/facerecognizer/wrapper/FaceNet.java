@@ -29,6 +29,8 @@ import java.nio.FloatBuffer;
 
 import pp.facerecognizer.Classifier;
 
+import static pp.facerecognizer.faceCompare.FaceAlign.face_align;
+
 
 public class FaceNet {
     private static final String MODEL_FILE = "file:///android_asset/facenet.pb";
@@ -103,7 +105,7 @@ public class FaceNet {
 
     private FaceNet() {}
 
-    public FloatBuffer getEmbeddings(Bitmap originalBitmap, Rect rect) {
+    public FloatBuffer getEmbeddings(Bitmap originalBitmap, Rect rect, float[] landmarks) {
         // Log this method so that it can be analyzed with systrace.
         Trace.beginSection("getEmbeddings");
 
@@ -111,6 +113,7 @@ public class FaceNet {
         Canvas canvas = new Canvas(bitmap);
         canvas.drawBitmap(originalBitmap, rect, new Rect(0, 0, inputWidth, inputHeight), null);
 
+        Bitmap alignedFaceBitmap = face_align(originalBitmap);
         bitmap.getPixels(intValues, 0, inputWidth, 0, 0, inputWidth, inputHeight);
 
         for (int i = 0; i < intValues.length; ++i) {
