@@ -119,7 +119,7 @@ public class MainActivity extends CameraActivity implements OnImageAvailableList
                     }
                     else{
                         warningSnackabr.show();
-                        warningSnackabr.dismiss();
+//                        warningSnackabr.dismiss();
                     }
                 })
                 .create();
@@ -131,9 +131,10 @@ public class MainActivity extends CameraActivity implements OnImageAvailableList
                         .setItems(classifier.getClassNames(), (dialogInterface, i) -> {
                             if (i == 0) {
                                 editDialog.show();
-                            } else {
-                                performFileSearch(i - 1);
                             }
+//                            else {
+//                                performFileSearch(i - 1);
+//                            }
                         })
                         .show());
     }

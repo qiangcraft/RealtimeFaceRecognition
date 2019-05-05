@@ -29,9 +29,6 @@ import java.nio.FloatBuffer;
 
 import pp.facerecognizer.Classifier;
 
-import static pp.facerecognizer.faceCompare.FaceAlign.face_align;
-
-
 public class FaceNet {
     private static final String MODEL_FILE = "file:///android_asset/facenet.pb";
     private static final int BYTE_SIZE_OF_FLOAT = 4;
@@ -113,7 +110,6 @@ public class FaceNet {
         Canvas canvas = new Canvas(bitmap);
         canvas.drawBitmap(originalBitmap, rect, new Rect(0, 0, inputWidth, inputHeight), null);
 
-        Bitmap alignedFaceBitmap = face_align(originalBitmap);
         bitmap.getPixels(intValues, 0, inputWidth, 0, 0, inputWidth, inputHeight);
 
         for (int i = 0; i < intValues.length; ++i) {
