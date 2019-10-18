@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.List;
+import java.util.ArrayList;
 
 import pp.facerecognizer.faceCompare.DetectedFace;
 
@@ -135,7 +136,7 @@ public class MTCNN {
 
 
         int len = outputProbs.remaining();
-        List<DetectedFace> facesList = null;
+        ArrayList<DetectedFace> facesList = new ArrayList<>();
         DetectedFace detectedFaceTmp;
 
         for (int i = 0; i < len; i++) {
