@@ -160,32 +160,33 @@ public class Classifier {
             List<DetectedFace> detectedFaceList = mtcnn.detect(bitmap);
 
             final List<Recognition> mappedRecognitions = new LinkedList<>();
+            if(detectedFaceList!=null){
+                for (DetectedFace detectedFace : detectedFaceList) {
+                    RectF rectF = detectedFace.getRectF();
+                    float[] landmarks = detectedFace.getLandmarks();
+                    float[] embeddingsArray = new float[Classifier.EMBEDDING_SIZE];
+                    Rect rect = new Rect();
+                    assert rectF != null;
+                    rectF.round(rect);
 
-            for (DetectedFace detectedFace : detectedFaceList) {
-                RectF rectF = detectedFace.getRectF();
-                float[] landmarks = detectedFace.getLandmarks();
-                float[] embeddingsArray = new float[Classifier.EMBEDDING_SIZE];
-                Rect rect = new Rect();
-                assert rectF != null;
-                rectF.round(rect);
+                    FloatBuffer buffer = faceNet.getEmbeddings(bitmap, rect, landmarks);
+                    buffer.get(embeddingsArray,0 ,embeddingsArray.length);
+                    android.util.Pair<Integer, Double> pair = FaceFeature.search(embeddingsArray, DATA_FILE);
+                    // first - label; second - cmpResult
+                    matrix.mapRect(rectF);
+                    String name;
+                    int label = pair.first;
+                    double result = pair.second;
+                    if (label >= 0 )
+                        name = classNames.get(label);
+                    else
+                        name = "Unknown";
 
-                FloatBuffer buffer = faceNet.getEmbeddings(bitmap, rect, landmarks);
-                buffer.get(embeddingsArray,0 ,embeddingsArray.length);
-                android.util.Pair<Integer, Double> pair = FaceFeature.search(embeddingsArray, DATA_FILE);
-                // first - label; second - cmpResult
-                matrix.mapRect(rectF);
-                String name;
-                int label = pair.first;
-                double result = pair.second;
-                if (label >= 0 )
-                    name = classNames.get(label);
-                else
-                    name = "Unknown";
-
-                Recognition resultRec =
-                        new Recognition("" + name, name, (float) result, rectF);
-                mappedRecognitions.add(resultRec);
-            }
+                    Recognition resultRec =
+                            new Recognition("" + name, name, (float) result, rectF);
+                    mappedRecognitions.add(resultRec);
+                }
+            }    
             return mappedRecognitions;
         }
 
