@@ -24,7 +24,7 @@ limitations under the License.
 #include "yuv2rgb.h"
 
 #define IMAGEUTILS_METHOD(METHOD_NAME) \
-  Java_pp_facerecognizer_env_ImageUtils_##METHOD_NAME  // NOLINT
+  Java_qiang_facerecognition_utils_ImageUtils_##METHOD_NAME  // NOLINT
 
 #ifdef __cplusplus
 extern "C" {

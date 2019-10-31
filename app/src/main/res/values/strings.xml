@@ -1,10 +1,20 @@
 <resources>
     <string name="app_name">FaceRec</string>
     <string name="camera_error">This device doesn\'t support Camera2 API.</string>
-    <string name="enter_name">Enter name</string>
-    <string name="select_name">Select name</string>
-    <string name="ok">OK</string>
-
+    <string name="enter_name">输入姓名</string>
+    <string name="select_name">熟人列表</string>
     <string name="add_person">add person</string>
     <string name="update_person">update person</string>
+    <string name="dialog_delete_face_title">删除人脸</string>
+    <string name="dialog_delete_face_message">确认删除这个人的人脸数据吗?</string>
+    <string name="dialog_btn_confirm_text">确定</string>
+    <string name="dialog_btn_cancel_text">取消</string>
+    <string name="dialog_have_deleted_text">你已经删除了他的人脸数据。</string>
+    <string name="person_name_existed">此人已存在，请重新输入！</string>
+    <string name="name_not_empty">姓名不能为空</string>
+    <string name="initializing">初始化中&#8230;</string>
+    <string name="adding_face">正更新人脸库&#8230;</string>
+    <string name="add_face_success">人脸添加成功！</string>
+    <string name="add_face_fail">人脸添加失败！可能原因：添加的图片非人脸或人脸不够清晰</string>
+    <string name="audio_permission_fail">务必开启音频录制权限，否则将影响正常使用语音功能</string>
 </resources>
