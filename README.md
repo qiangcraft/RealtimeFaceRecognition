@@ -1,8 +1,9 @@
-# Realtime Face Recognizer
+# Realtime Face Recognition on Android Devices
 
 
-This sample demonstrates realtime face recognition on Android. The project is based on the [FaceNet](https://arxiv.org/abs/1503.03832). FaceNet output the image's face feature embedding vector.
-We store only one picture of the same person. We compare the detected real-time face with the FaceDB's face by computing two faces' Euclidean distance.If it is smaller than 1.1, we consider they are the same person.
+This sample demonstrates realtime face recognition on Android. The project is based on the [FaceNet](https://arxiv.org/abs/1503.03832) now. 
+FaceNet output the image's face feature embedding vector.
+We store only one picture of the same person. We compare the detected real-time face feature with the FaceDB's face feature by computing two faces' Euclidean distance.If The distance is smaller than THRESHOLD, and  it is the minimum compared result, we consider they are the same person.
 
 ## Inspiration
 The project is heavily inspired by
@@ -11,11 +12,8 @@ The project is heavily inspired by
 * [Tensorflow Android Camera Demo](https://github.com/tensorflow/tensorflow/tree/master/tensorflow/examples/android)
 * [Face-recognizer-android](https://github.com/pillarpond/face-recognizer-android)
 ## Function
-The code can recognize 5 famous people's faces.[(Source)](https://github.com/qiangz520/RealtimeFaceRecognition/blob/master/app/src/main/assets/label)
-
-
-Also, you can add new person using a photo, then you recognize more new person.
-
+* You can click the '+ 'button ,then add the new person's face image and name that you want to recognize.[(Source)](https://github.com/qiangz520/RealtimeFaceRecognition/blob/master/app/src/main/assets/label)
+8 You can click one person's name in that list to delete his face data.
 
 ## Pre-trained model
 from davidsandberg's facenet
@@ -26,3 +24,7 @@ from davidsandberg's facenet
 
 ## License
 [Apache License 2.0](./LICENSE)
+
+## To-do works
+* Use more accurate, lighter and faster face recognition model
+* Use better and faster face detector
