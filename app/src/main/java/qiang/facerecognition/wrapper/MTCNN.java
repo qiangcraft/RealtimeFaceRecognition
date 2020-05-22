@@ -12,10 +12,9 @@ limitations under the License.
 
 package qiang.facerecognition.wrapper;
 
-import android.content.res.AssetManager;
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
-import android.os.Trace;
 
 import org.tensorflow.Graph;
 import org.tensorflow.contrib.android.TensorFlowInferenceInterface;
@@ -25,80 +24,59 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 
-import qiang.facerecognition.faceCompare.DetectedFace;
+import qiang.facerecognition.face.FaceAttr;
 
 public class MTCNN {
     private static final String MODEL_FILE = "file:///android_asset/mtcnn.pb";
+    private static final float FACE_PROB_THRESHOLD = 0.98f;     // 只返回概率大于0.98的人脸
     // Only return this many results.
+    private static final float FACE_SIZE_THRESHOLD = 30;  //过滤掉过小的人脸
     private static final int MAX_RESULTS = 100;
     private static final int NUM_LANDMARKS = 10;
     private static final int BYTE_SIZE_OF_FLOAT = 4;
-
     // Config values.
     private String inputName;
-
     // Pre-allocated buffers.
-    private FloatBuffer outputProbs;
-    private FloatBuffer outputLandmarks;
-    private FloatBuffer outputBoxes;
-
     private String[] outputNames;
-
     private TensorFlowInferenceInterface inferenceInterface;
 
-    /**
-     * Initializes a native TensorFlow session for classifying images.
-     *
-     * @param assetManager The asset manager to be used to load assets.
-     */
-    public static MTCNN create(
-            final AssetManager assetManager) {
-        final MTCNN d = new MTCNN();
+    public MTCNN(Activity activity) {
 
-        d.inferenceInterface = new TensorFlowInferenceInterface(assetManager, MODEL_FILE);
+        inferenceInterface = new TensorFlowInferenceInterface(activity.getAssets(), MODEL_FILE);
 
-        final Graph g = d.inferenceInterface.graph();
+        final Graph g = inferenceInterface.graph();
 
-        d.inputName = "input";
-        if (g.operation(d.inputName) == null)
-            throw new RuntimeException("Failed to find input Node '" + d.inputName + "'");
+        inputName = "input";
+        if (g.operation(inputName) == null)
+            throw new RuntimeException("Failed to find input Node '" + inputName + "'");
 
-        d.outputNames = new String[] {"prob", "landmarks", "box"};
-        if (g.operation(d.outputNames[0]) == null)
-            throw new RuntimeException("Failed to find output Node '" + d.outputNames[0] + "'");
+        outputNames = new String[] {"prob", "landmarks", "box"};
+        if (g.operation(outputNames[0]) == null)
+            throw new RuntimeException("Failed to find output Node '" + outputNames[0] + "'");
 
-        if (g.operation(d.outputNames[1]) == null)
-            throw new RuntimeException("Failed to find output Node '" + d.outputNames[1] + "'");
+        if (g.operation(outputNames[1]) == null)
+            throw new RuntimeException("Failed to find output Node '" + outputNames[1] + "'");
 
-        if (g.operation(d.outputNames[2]) == null)
-            throw new RuntimeException("Failed to find output Node '" + d.outputNames[2] + "'");
+        if (g.operation(outputNames[2]) == null)
+            throw new RuntimeException("Failed to find output Node '" + outputNames[2] + "'");
 
         // Pre-allocate buffers.
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(MAX_RESULTS * BYTE_SIZE_OF_FLOAT);
-        byteBuffer.order(ByteOrder.nativeOrder());
-        d.outputProbs = byteBuffer.asFloatBuffer();
-        d.outputLandmarks = ByteBuffer.allocateDirect(MAX_RESULTS*BYTE_SIZE_OF_FLOAT*10)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer();
-        d.outputBoxes = ByteBuffer.allocateDirect(MAX_RESULTS * BYTE_SIZE_OF_FLOAT * 4)
-                .order(ByteOrder.nativeOrder())
-                .asFloatBuffer();
-
-        return d;
     }
 
-    private MTCNN() {}
 
-    public ArrayList<DetectedFace> detect(Bitmap bitmap) {
-        // Log this method so that it can be analyzed with systrace.
-        Trace.beginSection("detect");
-
-        Trace.beginSection("preprocessBitmap");
-        // Preprocess the image data from 0-255 int to normalized float based
-        // on the provided parameters.
+    public ArrayList<FaceAttr> detect(Bitmap bitmap) {
+        FloatBuffer outputProbs = ByteBuffer.allocateDirect(MAX_RESULTS * BYTE_SIZE_OF_FLOAT)
+                .order(ByteOrder.nativeOrder()).
+                        asFloatBuffer();
+        FloatBuffer outputLandmarks = ByteBuffer.allocateDirect(MAX_RESULTS * BYTE_SIZE_OF_FLOAT * 10)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer();
+        FloatBuffer outputBoxes = ByteBuffer.allocateDirect(MAX_RESULTS * BYTE_SIZE_OF_FLOAT * 4)
+                .order(ByteOrder.nativeOrder())
+                .asFloatBuffer();
         int w = bitmap.getWidth(), h = bitmap.getHeight();
-        int intValues[] = new int[w * h];
-        float floatValues[] = new float[w * h * 3];
+        int[] intValues = new int[w * h];
+        float[] floatValues = new float[w * h * 3];
 
         bitmap.getPixels(intValues, 0, w, 0, 0, w, h);
 
@@ -110,49 +88,56 @@ public class MTCNN {
             floatValues[i * 3 + 1] = (p >> 8) & 0xFF;
             floatValues[i * 3 + 2] = (p >> 16) & 0xFF;
         }
-        Trace.endSection(); // preprocessBitmap
 
-        // Copy the input data into TensorFlow.
-        Trace.beginSection("feed");
         inferenceInterface.feed(inputName, floatValues, h, w, 3);
-        Trace.endSection();
 
-        // Run the inference call.
-        Trace.beginSection("run");
         inferenceInterface.run(outputNames, false);
-        Trace.endSection();
 
-        // Copy the output Tensor back into the output array.
-        Trace.beginSection("fetch");
         inferenceInterface.fetch(outputNames[0], outputProbs);
-        inferenceInterface.fetch(outputNames[1],outputLandmarks);
+        inferenceInterface.fetch(outputNames[1], outputLandmarks);
         inferenceInterface.fetch(outputNames[2], outputBoxes);
-        Trace.endSection();
 
         outputProbs.flip();
         outputLandmarks.flip();
         outputBoxes.flip();
 
-
         int len = outputProbs.remaining();
-        ArrayList<DetectedFace> facesList = new ArrayList<>();
-        DetectedFace detectedFaceTmp;
+        ArrayList<FaceAttr> facesList = new ArrayList<>();
+        FaceAttr detectedFaceTmp;
 
         for (int i = 0; i < len; i++) {
             float prob = outputProbs.get();
+            if (prob < FACE_PROB_THRESHOLD){
+                continue;
+            }
             float top = outputBoxes.get();
             float left = outputBoxes.get();
             float bottom = outputBoxes.get();
             float right = outputBoxes.get();
-            int j;
+
+//            if(Math.abs(top-bottom) < FACE_SIZE_THRESHOLD || Math.abs(left-right) < FACE_SIZE_THRESHOLD){
+//                continue;
+//            }
+
             float[] landmarks = new float[NUM_LANDMARKS] ;
-            for(j = 0; j < 10; j++){
-                 if (j%2==0) landmarks[j] = outputLandmarks.get()-left;//L1x,L1y,...,L5x,L5y;
-                     // 直接保存用Rect剪裁后的图片中face的landmarks
-                 else landmarks[j] = outputLandmarks.get()-top;
+            float[] landmarksCoordinate = new float[NUM_LANDMARKS] ;
+            for(int j = 0; j < NUM_LANDMARKS; j++){
+                //  前5个点是y坐标，后5个是x坐标
+                landmarks[j] = outputLandmarks.get();
             }
-            detectedFaceTmp = new DetectedFace(prob, landmarks,
-                    new RectF(left, top, right, bottom));
+
+            for(int j = 0; j < NUM_LANDMARKS; j++){
+                // 变成(x,y)的坐标
+                if(j % 2 == 0){
+                    landmarksCoordinate[j] = landmarks[NUM_LANDMARKS/2+j/2];
+                }
+                else {
+                    landmarksCoordinate[j] = landmarks[j/2];
+                }
+
+            }
+
+            detectedFaceTmp = new FaceAttr(prob, landmarksCoordinate, new RectF(left, top, right, bottom));
             facesList.add(detectedFaceTmp);
         }
 
@@ -163,7 +148,6 @@ public class MTCNN {
         outputLandmarks.compact();
         outputBoxes.compact();
 
-        Trace.endSection(); // "detect"
         return facesList;
     }
 

@@ -3,6 +3,7 @@ package qiang.facerecognition.utils;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -19,12 +20,12 @@ import java.util.Scanner;
 import qiang.facerecognition.env.Logger;
 
 public class FileUtils {
+    private static final String TAG = "FileUtils";
     private static final Logger LOGGER = new Logger();
     public static final String ROOT =
             Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "facerecognizer";
 
     public static final String DATA_FILE = "data";
-    public static final String LABEL_FILE = "label";
     public static final int EMBEDDING_SIZE = 512;
 
     /**
@@ -94,13 +95,20 @@ public class FileUtils {
     }
 
     public static void appendText(String text, String filename) {
-        text = System.lineSeparator()+text;
+        try {
+            if(readFileByLine(filename).size()>0){
+                text = System.lineSeparator()+text;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
         try(FileWriter fw = new FileWriter(ROOT + File.separator + filename, true);
             PrintWriter out = new PrintWriter(new BufferedWriter(fw))) {
             out.print(text);
         } catch (IOException e) {
             //exception handling left as an exercise for the reader
-            LOGGER.e(e, "IOException!");
+            Log.e(TAG, "AppendText IOExcetion!");
         }
     }
 
@@ -118,11 +126,11 @@ public class FileUtils {
     //删除此人对应的data和label中的第index行
     public static void deleteTheFace(int index){
         String dataPath = ROOT + File.separator + DATA_FILE; // 数据文件路径
-        String labelPath = ROOT + File.separator + LABEL_FILE; //标签（姓名）路径
+//        String labelPath = ROOT + File.separator + LABEL_FILE; //标签（姓名）路径
         FileModify obj1 = new FileModify();
-        FileModify obj2 = new FileModify();
+//        FileModify obj2 = new FileModify();
 
         obj1.write(dataPath, obj1.read(dataPath, index)); // 读取数据文件
-        obj2.write(labelPath, obj2.read(labelPath, index)); //读取标签文件
+//        obj2.write(labelPath, obj2.read(labelPath, index)); //读取标签文件
     }
 }

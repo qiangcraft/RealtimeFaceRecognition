@@ -28,6 +28,9 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     buildToolsVersion '28.0.3'
+    aaptOptions {
+        noCompress "tflite"
+    }
 }
 
 dependencies {
@@ -38,4 +41,5 @@ dependencies {
     // Build off of nightly TensorFlow Lite
     implementation 'org.tensorflow:tensorflow-lite:1.14.0'
     implementation 'org.tensorflow:tensorflow-lite-gpu:1.14.0'
+    implementation 'net.gotev:speech:1.4.0'
 }
